@@ -19,6 +19,10 @@ interface SelectorOptionComponentTypes extends SelectorOptionTypes {
 
 type ReactStatePair<T> = [T, React.Dispatch<React.SetStateAction<T>>]
 
+/**
+ * SelectorOption
+ * Checkbox input and label
+ */
 function SelectorOption({ label, name, value, onChange } : SelectorOptionComponentTypes) {
   return (
     <div className="selector_option">
@@ -33,11 +37,20 @@ function SelectorOption({ label, name, value, onChange } : SelectorOptionCompone
   )
 }
 
+/**
+ * Selector
+ * Collection of options in a checkbox form
+ * @param options array of checkbox options
+ * @param allSelected default value for every option (checked/unchecked)
+ */
 function Selector({ options, allSelected = false } : SelectorPropsTypes ) {
   
   const [selectedOptions, setSelectedOptions]: ReactStatePair<Map<string, boolean>> = useState(new Map(options.map(({ name, defaultValue = false }) => [name, allSelected || defaultValue])))
   const [isAllSelected, setIsAllSelected] = useState(allSelected)
   
+  /**
+   * Update ´selectedOptions´ and ´isAllSelected´ states to match whether the "Select All" checkbox is checked or not.
+   */
   const selectAllOptions = useCallback(() => {
     setIsAllSelected(prevValue => {
       setSelectedOptions(new Map(options.map(({ name }) => [name, !prevValue])))
@@ -45,6 +58,10 @@ function Selector({ options, allSelected = false } : SelectorPropsTypes ) {
     })
   }, [setIsAllSelected, setSelectedOptions, options])
 
+  /**
+   * Select/deselect a specific checkbox option, updating the given key of the `selectedOptions` Map.
+   * @param name unique key of the selected checkbox
+   */
   const selectOption = useCallback( (name: string) => {
     setSelectedOptions((prevValue) => {
       let newValue = new Map(prevValue)
@@ -95,7 +112,7 @@ function App() {
   return (
     <div className="App">
       <Selector
-        options={mockData}
+        options={JSON.parse(JSON.stringify(mockData))}
         allSelected={true}
       />
     </div>
