@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import './App.css';
 
 interface SelectorPropsTypes {
@@ -14,7 +14,7 @@ interface SelectorOptionTypes {
 
 interface SelectorOptionComponentTypes extends SelectorOptionTypes {
   onChange() : void
-  value: boolean
+  isChecked: boolean
 }
 
 type ReactStatePair<T> = [T, React.Dispatch<React.SetStateAction<T>>]
@@ -23,13 +23,13 @@ type ReactStatePair<T> = [T, React.Dispatch<React.SetStateAction<T>>]
  * SelectorOption
  * Checkbox input and label
  */
-function SelectorOption({ label, name, value, onChange } : SelectorOptionComponentTypes) {
+function SelectorOption({ label, name, isChecked, onChange } : SelectorOptionComponentTypes) {
   return (
     <div className="selector_option">
       <input 
         type="checkbox" 
         onChange={onChange}
-        checked={value} 
+        checked={isChecked} 
         name={name} 
       />
       <label htmlFor={name}>{label}</label>
@@ -45,18 +45,17 @@ function SelectorOption({ label, name, value, onChange } : SelectorOptionCompone
  */
 function Selector({ options, allSelected = false } : SelectorPropsTypes ) {
   
+  // Key-value Map (´name´, ´isChecked´) keeping up with the state for each checkbox option
   const [selectedOptions, setSelectedOptions]: ReactStatePair<Map<string, boolean>> = useState(new Map(options.map(({ name, defaultValue = false }) => [name, allSelected || defaultValue])))
-  const [isAllSelected, setIsAllSelected] = useState(allSelected)
+  
+  const isAllSelected = useMemo(()=> Array.from(selectedOptions.values()).every((isChecked) => isChecked), [selectedOptions])
   
   /**
-   * Update ´selectedOptions´ and ´isAllSelected´ states to match whether the "Select All" checkbox is checked or not.
+   * Update ´selectedOptions´ state to match whether the "Select All" checkbox is checked or not.
    */
   const selectAllOptions = useCallback(() => {
-    setIsAllSelected(prevValue => {
-      setSelectedOptions(new Map(options.map(({ name }) => [name, !prevValue])))
-      return !prevValue
-    })
-  }, [setIsAllSelected, setSelectedOptions, options])
+    setSelectedOptions(new Map(options.map(({ name }) => [name, !isAllSelected])))
+  }, [isAllSelected, setSelectedOptions, options])
 
   /**
    * Select/deselect a specific checkbox option, updating the given key of the `selectedOptions` Map.
@@ -76,7 +75,7 @@ function Selector({ options, allSelected = false } : SelectorPropsTypes ) {
         label="Select All" 
         name="select_all" 
         onChange={selectAllOptions}
-        value={isAllSelected}
+        isChecked={isAllSelected}
       />
       {
         options.map(({ label, name }) => (
@@ -84,7 +83,7 @@ function Selector({ options, allSelected = false } : SelectorPropsTypes ) {
             label={label}
             name={name}
             key={name}
-            value={selectedOptions.get(name) || false}
+            isChecked={selectedOptions.get(name) || false}
             onChange={() => selectOption(name)}
           />
         ))
